@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+title: "cmip6-br: statistical downscaling and climate-extreme indices for Brazil"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Braga
+    given-names: Otávio
+version: 0.1.0
+date-released: 2026-09-01
+license: MIT
+repository-code: "https://github.com/OtavioBraga/cmip6-br"
+keywords:
+  - climate change
+  - downscaling
+  - bias correction
+  - CMIP6
+  - Brazil

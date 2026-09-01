@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cmip6-br"
+version = "0.1.0"
+description = "Statistical downscaling and climate-extreme indices for CMIP6 projections over Brazil"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Otávio Braga" }]
+keywords = [
+  "climate", "cmip6", "downscaling", "bias-correction", "quantile-mapping",
+  "etccdi", "climate-risk", "brazil", "inmet", "adaptation",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "xarray>=2023.1",
+  "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+io = ["netCDF4>=1.6", "h5netcdf>=1.1"]
+geo = ["rioxarray>=0.15", "geopandas>=0.14"]
+dev = ["pytest>=7.4", "pytest-cov>=4.1", "ruff>=0.4", "build>=1.0"]
+
+[project.scripts]
+cmip6-br = "cmip6_br.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/OtavioBraga/cmip6-br"
+Issues = "https://github.com/OtavioBraga/cmip6-br/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cmip6_br"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

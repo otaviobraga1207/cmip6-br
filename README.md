@@ -15,7 +15,9 @@ project.
 `cmip6-br` is that layer, written once, tested, and installable.
 
 ```bash
-pip install cmip6-br
+pip install cmip6-br            # core
+pip install "cmip6-br[viz]"     # + maps and figures
+pip install "cmip6-br[geo]"     # + GeoTIFF export and boundary overlays
 ```
 
 ## Sixty-second tour
@@ -106,6 +108,44 @@ interpolated first — the honest options are a gridded observational product
 own interpolation of the station network. `stations.py` gets the stations into
 xarray; it does not pretend that a point is a grid cell.
 
+## Maps
+
+```bash
+cmip6-br figures out/          # the whole figure set from the demo data
+cmip6-br map indices.nc map.png --variable rx1day
+cmip6-br map hist.nc change.png --variable rx1day --change ssp.nc
+cmip6-br map indices.nc map.png --geotiff rx1day.tif --epsg 31983   # for QGIS
+```
+
+```python
+from cmip6_br import plots
+
+plots.map_field(result.indices_scenario["rx1day"], title="Rx1day, SSP5-8.5 2041-2060")
+plots.map_change(hist_idx["rx1day"], scen_idx["rx1day"])         # % change, centred on zero
+plots.map_panel({"Rx1day (mm)": ..., "CDD (days)": ...})          # small multiples
+plots.qq_plot(obs, raw, corrected)                                # did the correction work?
+plots.seasonal_cycle({"observations": obs, "corrected": corrected})
+plots.save_geotiff(field, "rx1day.tif", epsg=31983)               # SIRGAS 2000 / UTM 23S
+```
+
+Three rules are enforced by the code rather than left to the user:
+
+- **Magnitude fields get one hue, light to dark. Never a rainbow.** `jet` and
+  friends invent boundaries the data does not have and hide the ones it does —
+  a hazard map is exactly where that does damage.
+- **Change maps are always centred on zero**, with a neutral grey midpoint and
+  symmetric limits, so equal wetting and drying carry equal visual weight.
+- **Every colour bar carries units**, taken from the field itself, so a panel
+  mixing millimetres and days labels each one correctly.
+
+Series in the line figures are separated by colour *and* line style *and*
+marker, so the figures survive greyscale printing and colour-vision deficiency.
+`plots.qq_plot` is the figure to put in front of a reviewer: the raw model bends
+away from the 1:1 line in the upper tail, the corrected one sits on it.
+
+Overlay administrative limits by passing any GeoDataFrame or vector file:
+`map_field(..., boundaries="ottobacias_n5.gpkg")`.
+
 ## What is in the box
 
 | Module | What it does |
@@ -117,6 +157,7 @@ xarray; it does not pretend that a point is a grid cell.
 | `stations` | INMET BDMEP CSV reader (Latin-1, `;`, comma decimals, metadata block, `-9999`) |
 | `units` | kg m⁻² s⁻¹ → mm/day, K → °C, dataset-wide `harmonize()` |
 | `validation` | bias, MAE, RMSE, Pearson r, KGE, Perkins skill score, raw-vs-corrected table |
+| `plots` | Maps (sequential and diverging), small multiples, Q-Q and seasonal-cycle figures, GeoTIFF export |
 | `pipeline` | `downscale()` — the whole workflow from one config |
 
 ## Method notes
@@ -153,6 +194,9 @@ threshold explicitly.
   For flux-conserving remapping onto a coarser grid, use `xesmf`.
 - Every method here is univariate. Inter-variable consistency (temperature and
   precipitation together) needs a multivariate method such as MBCn.
+- The maps are plain lat/lon (plate carrée) with a cosine-of-latitude aspect
+  correction, not a real projection. For a publication map in SIRGAS 2000 /
+  UTM 23S, export a GeoTIFF and finish it in QGIS.
 - A 0.1° output grid is not 11 km of real information. The added detail comes
   from the observations you calibrated against, not from the GCM.
 - The bounding boxes in `grids.py` are padded rectangles for cheap subsetting,
@@ -195,6 +239,10 @@ descendente, unidades de fluxo), lê os CSVs do BDMEP/INMET como eles realmente
 vêm (Latin-1, `;`, vírgula decimal, cabeçalho de metadados, `-9999`),
 corrige viés por *quantile mapping* com função de transferência mensal e
 adaptação da frequência de dias chuvosos, e calcula os índices ETCCDI.
+
+Para os mapas: `cmip6-br figures out/` gera o conjunto completo a partir dos
+dados sintéticos, e `plots.save_geotiff(campo, "rx1day.tif", epsg=31983)`
+exporta em SIRGAS 2000 / UTM 23S para você terminar no QGIS.
 
 Comece por `cmip6-br demo` — roda em segundos, sem baixar nada, e mostra o que
 a correção de viés faz e o que ela não faz. Depois troque `datasets.demo_bundle()`

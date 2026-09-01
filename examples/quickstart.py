@@ -33,3 +33,30 @@ for name in hist_idx.index:
 
 written = result.to_netcdf("quickstart")
 print("\nwrote:", ", ".join(written))
+
+# --- Maps -------------------------------------------------------------------
+# Needs the viz extra: pip install "cmip6-br[viz]"
+try:
+    import matplotlib.pyplot as plt
+
+    from cmip6_br import plots
+except ImportError:
+    print("\nskipping figures (matplotlib not installed)")
+else:
+    hist_maps = result.indices_historical
+    scen_maps = result.indices_scenario
+
+    plots.map_field(hist_maps["rx1day"], title="Rx1day, corrected historical")
+    plt.savefig("quickstart_rx1day.png", dpi=140)
+
+    plots.map_change(
+        hist_maps["rx1day"],
+        scen_maps["rx1day"],
+        title="Rx1day change, scenario vs historical",
+    )
+    plt.savefig("quickstart_rx1day_change.png", dpi=140)
+
+    plots.qq_plot(obs, hist, result.historical)
+    plt.savefig("quickstart_qq.png", dpi=140)
+
+    print("wrote: quickstart_rx1day.png, quickstart_rx1day_change.png, quickstart_qq.png")

@@ -9,7 +9,18 @@ Quick start
 >>> annual = indices.rx1day(corrected)
 """
 
-from . import bias, datasets, grids, indices, pipeline, regrid, stations, units, validation
+from . import (
+    bias,
+    datasets,
+    grids,
+    indices,
+    pipeline,
+    plots,
+    regrid,
+    stations,
+    units,
+    validation,
+)
 from .bias import EQM, QDM
 from .grids import BBox, TargetGrid, bbox, grid_for, regular_grid
 from .pipeline import DownscalingConfig, DownscalingResult, downscale
@@ -17,7 +28,8 @@ from .regrid import normalize_coords, subset_bbox
 from .stations import read_bdmep, read_bdmep_dir, stations_to_dataset
 from .units import to_celsius, to_mm_day
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
+
 
 __all__ = [
     "__version__",
@@ -26,6 +38,7 @@ __all__ = [
     "grids",
     "indices",
     "pipeline",
+    "plots",
     "regrid",
     "stations",
     "units",

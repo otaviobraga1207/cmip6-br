@@ -65,6 +65,91 @@ def cmd_demo(args) -> int:
     return 0
 
 
+def cmd_map(args) -> int:
+    """Render a map from a NetCDF file."""
+    from . import plots
+
+    field = _open(args.input, args.variable)
+    if args.change is not None:
+        other = _open(args.change, args.variable)
+        ax = plots.map_change(
+            field,
+            other,
+            title=args.title,
+            relative=not args.absolute,
+            boundaries=args.boundaries,
+        )
+    else:
+        ax = plots.map_field(field, title=args.title, boundaries=args.boundaries)
+    ax.figure.savefig(args.output, dpi=args.dpi)
+    print(f"wrote {args.output}")
+    if args.geotiff:
+        plots.save_geotiff(field, args.geotiff, epsg=args.epsg)
+        print(f"wrote {args.geotiff} (EPSG:{args.epsg})")
+    return 0
+
+
+def cmd_figures(args) -> int:
+    """The full figure set from the demo data, into a directory."""
+    from pathlib import Path
+
+    from . import indices as idx
+    from . import plots
+
+    mpl, plt = plots._require_mpl()
+    mpl.use("Agg")
+
+    out = Path(args.directory)
+    out.mkdir(parents=True, exist_ok=True)
+    data = datasets.demo_bundle()
+    mapper = fit_bias(data["obs"], data["hist"], variable="pr")
+    corrected, scenario = mapper.adjust(data["hist"]), mapper.adjust(data["ssp"])
+    hist_idx = idx.all_precip_indices(corrected)
+    scen_idx = idx.all_precip_indices(scenario)
+
+    written = []
+    figures = {
+        "01_rx1day_historical": lambda: (
+            plots.map_field(hist_idx["rx1day"], title="Rx1day, corrected historical").figure
+        ),
+        "02_rx1day_change": lambda: (
+            plots.map_change(
+                hist_idx["rx1day"],
+                scen_idx["rx1day"],
+                title="Rx1day change, scenario vs historical",
+            ).figure
+        ),
+        "03_indices_panel": lambda: plots.map_panel(
+            {
+                "Rx1day (mm)": scen_idx["rx1day"],
+                "R95p (mm)": scen_idx["r95p"],
+                "CDD (days)": scen_idx["cdd"],
+                "PRCPTOT (mm)": scen_idx["prcptot"],
+            },
+            shared_scale=False,
+            suptitle="ETCCDI indices, corrected scenario",
+        ),
+        "04_quantile_quantile": lambda: plots.qq_plot(data["obs"], data["hist"], corrected).figure,
+        "05_seasonal_cycle": lambda: (
+            plots.seasonal_cycle(
+                {
+                    "observations": data["obs"],
+                    "model raw": data["hist"],
+                    "model corrected": corrected,
+                }
+            ).figure
+        ),
+    }
+    for name, build in figures.items():
+        figure = build()
+        path = out / f"{name}.png"
+        figure.savefig(path, dpi=args.dpi)
+        plt.close(figure)
+        written.append(str(path))
+        print(f"wrote {path}")
+    return 0
+
+
 def cmd_indices(args) -> int:
     pr = _open(args.input, args.variable)
     out = indices.all_precip_indices(pr, freq=args.freq)
@@ -117,6 +202,28 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--variable", default="pr")
     p.add_argument("--freq", default="YS", help="pandas offset alias (YS, MS, QS-DEC)")
     p.set_defaults(func=cmd_indices)
+
+    p = sub.add_parser("map", help="render a map from a NetCDF file")
+    p.add_argument("input", help="NetCDF file")
+    p.add_argument("output", help="image file to write (.png, .pdf, .svg)")
+    p.add_argument("--variable", default="pr")
+    p.add_argument("--change", help="second NetCDF; maps the change against --input")
+    p.add_argument(
+        "--absolute",
+        action="store_true",
+        help="with --change, map the absolute difference instead of percent",
+    )
+    p.add_argument("--title")
+    p.add_argument("--boundaries", help="vector file with administrative limits to overlay")
+    p.add_argument("--geotiff", help="also export the field as a GeoTIFF for QGIS")
+    p.add_argument("--epsg", type=int, default=4326, help="GeoTIFF CRS (31983 = UTM 23S)")
+    p.add_argument("--dpi", type=int, default=150)
+    p.set_defaults(func=cmd_map)
+
+    p = sub.add_parser("figures", help="write the full demo figure set to a directory")
+    p.add_argument("directory", nargs="?", default="figures")
+    p.add_argument("--dpi", type=int, default=140)
+    p.set_defaults(func=cmd_figures)
 
     p = sub.add_parser("downscale", help="regrid + bias-correct + index in one pass")
     p.add_argument("obs", help="NetCDF with reference observations on the target grid")

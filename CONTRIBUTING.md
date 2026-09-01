@@ -8,7 +8,7 @@ pull requests all count.
 ```bash
 git clone https://github.com/OtavioBraga/cmip6-br
 cd cmip6-br
-pip install -e ".[dev,io]"
+pip install -e ".[dev,io,viz]"
 pytest
 ```
 

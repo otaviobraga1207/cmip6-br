@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-09-01
+
+### Added
+- `plots`: `map_field` (single-hue sequential), `map_change` (diverging,
+  symmetric around zero), `map_panel` (small multiples with per-field units),
+  `qq_plot`, `seasonal_cycle`, and `save_geotiff` for QGIS handoff, with
+  optional administrative-boundary overlays.
+- `cmip6-br map` and `cmip6-br figures` CLI commands.
+- `viz` optional extra (matplotlib). The core install stays plot-free.
+
 ## [0.1.0] - 2026-09-01
 
 First public release.
